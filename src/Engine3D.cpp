@@ -4,6 +4,7 @@
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace SSG::PhysicsEngine;
 
 Engine3D::Engine3D(const int screenWidth, const int screenHeight)
 {
@@ -104,7 +105,7 @@ void Engine3D::compileShaders(const std::pair<const std::vector<GLuint>, const c
     glUseProgram(this->programID);
 }
 
-void Engine3D::createCamera(const glm::dvec3& position, const glm::dvec3& front, const glm::dvec3& upVector)
+void Engine3D::createCamera(const ldvec3& position, const ldvec3& front, const ldvec3& upVector)
 {
     this->camera = new Camera(position, front, upVector);
 }
@@ -112,6 +113,85 @@ void Engine3D::createCamera(const glm::dvec3& position, const glm::dvec3& front,
 void Engine3D::createCamera()
 {
     this->camera = new Camera({0.0, 0.0, 5.0}, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
+}
+
+
+void Engine3D::Debug(const std::vector<ldvec3>& points) const
+{
+    std::cout << "Debugging points: " << points.size() << std::endl;
+    glfwMakeContextCurrent(this->window);
+    if (!this->window) return;
+    if (!this->camera) return;
+
+    GLfloat* vertices = static_cast<GLfloat*>(malloc(6 * sizeof(GLfloat) * points.size()));
+
+    for (unsigned long long i = 0; i < points.size(); i++)
+    {
+        const float mod = std::fmod(static_cast<float>(i), 3.f);
+        vertices[6 * i + 0] = static_cast<GLfloat>(points[i].x);
+        vertices[6 * i + 1] = static_cast<GLfloat>(points[i].y);
+        vertices[6 * i + 2] = static_cast<GLfloat>(points[i].z);
+        vertices[6 * i + 3] = std::floor(mod) == 0.f ? 1.f : 0.f;
+        vertices[6 * i + 4] = std::floor(mod) == 1.f ? 1.f : 0.f;
+        vertices[6 * i + 5] = std::floor(mod) == 2.f ? 1.f : 0.f;
+    }
+
+    unsigned long long count = 0;
+    unsigned long long count_wait = 0;
+
+    while (!glfwWindowShouldClose(this->window))
+    {
+        if (count_wait == 0)
+        {
+            count += 3;
+        }
+
+        if (count >= points.size() && count_wait >= 0)
+        {
+            count = 1;
+            count_wait = 0;
+        }
+        else if (count_wait >= 0)
+        {
+            count_wait = 0;
+        }
+        else
+        {
+            count_wait++;
+        }
+
+        GLfloat* sliced_vertices = static_cast<GLfloat*>(malloc(6 * sizeof(GLfloat) * count));
+        for (unsigned long long i = 0; i < 6 * count; i++)
+        {
+            sliced_vertices[i] = *(vertices + i);
+        }
+
+        currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        processInput();
+        this->camera->processInput(this->window, deltaTime);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * count * 6, sliced_vertices, GL_DYNAMIC_DRAW);
+
+        camera->setFront(cameraF);
+        glm::mat4 viewMatrix = camera->getViewMatrix();
+        glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), static_cast<long double>(width_) / static_cast<long double>(height_), 0.1L, 100.0L);
+
+        glUniformMatrix4fv(this->viewMatrixID, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(this->projectionMatrixID, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+        glPointSize(10.0f);
+        glDrawArrays(GL_POINTS, 0, 3 * count);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    free(vertices);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -130,12 +210,12 @@ void Engine3D::Draw()
 
     camera->setFront(cameraF);
     glm::mat4 viewMatrix = camera->getViewMatrix();
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), static_cast<double>(width_) / static_cast<double>(height_), 0.1, 100.0);
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), static_cast<long double>(width_) / static_cast<long double>(height_), 0.1L, 100.0L);
 
     glUniformMatrix4fv(this->viewMatrixID, 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(this->projectionMatrixID, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    glDrawArrays(GL_TRIANGLES, 0, 36 * (res + 1) * (res + 0));
+    glDrawArrays(GL_TRIANGLES, 0, 18 * (res + 1) * (res + 0));
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -244,24 +324,19 @@ void Engine3D::mainLoop()
     if (!this->window) return;
     if (!this->camera) return;
 
-    // constexpr GLfloat vertices[] =
-    // {
-    //     /*      COORDINATES                COLOURS         */
-    //     -0.5,  -0.2886750,  0.0,   0.8,   0.30,   0.02,
-    //      0.5,  -0.2886750,  0.0,   0.8,   0.30,   0.02,
-    //      0.0,   0.5773500,  0.0,   1.0,   0.60,   0.32,
-    //     -0.2,   0.1443375,  0.0,   0.9,   0.45,   0.17,
-    //      0.2,   0.1443375,  0.0,   0.9,   0.45,   0.17,
-    //      0.0,  -0.2886750,  0.0,   0.8,   0.30,   0.02,
-    // };
+    const std::vector<ldvec3> points = this->objects[0]->Construct();
 
-    const std::vector<GLfloat> vertices_temp = this->objects[0]->Construct();
+    GLfloat vertices[6 * points.size()];
 
-    GLfloat vertices[36 * (res + 1) * (res + 0)];
-
-    for (int i = 0; i < 36 * (res + 1) * (res + 0); i++)
+    for (unsigned long long i = 0; i < points.size(); i++)
     {
-        vertices[i] = vertices_temp[i];
+        const long double mod = std::fmod(i, 3.0L);
+        vertices[6 * i + 0] = points[i].x;
+        vertices[6 * i + 1] = points[i].y;
+        vertices[6 * i + 2] = points[i].z;
+        vertices[6 * i + 3] = std::floor(mod) == 0.f ? 1.f : 0.f;
+        vertices[6 * i + 4] = std::floor(mod) == 1.f ? 1.f : 0.f;
+        vertices[6 * i + 5] = std::floor(mod) == 2.f ? 1.f : 0.f;
     }
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -281,12 +356,12 @@ void Engine3D::mouse_callback(GLFWwindow* /*win*/, double xpos, double ypos)
         firstMouse = false;
     }
 
-    double xoffset = xpos - lastX;
-    double yoffset = lastY - ypos;
+    long double xoffset = xpos - lastX;
+    long double yoffset = lastY - ypos;
     lastX = xpos;
     lastY = ypos;
 
-    const double sensitivity = 10.0 * deltaTime;
+    const long double sensitivity = 10.0 * deltaTime;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
@@ -298,10 +373,10 @@ void Engine3D::mouse_callback(GLFWwindow* /*win*/, double xpos, double ypos)
     if(pitch < -89.0f)
         pitch = -89.0f;
 
-    glm::dvec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    ldvec3 direction;
+    direction.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+    direction.y = std::sin(glm::radians(pitch));
+    direction.z = std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
     cameraF = glm::normalize(direction);
 }
 

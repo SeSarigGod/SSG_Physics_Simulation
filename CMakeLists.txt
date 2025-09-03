@@ -22,6 +22,7 @@ add_executable(physics_simulation main.cpp
         # shaders/basic.frag
         # shaders/basic.vert
         ${HEADERS}
+        src/DelauneyTriangulation.cpp
 )
 
 target_include_directories(physics_simulation

@@ -1,46 +1,47 @@
-#include "../include/Camera.h"
+#include "Camera.h"
 
+using namespace SSG::PhysicsEngine;
 
-Camera::Camera(const glm::dvec3& position, const glm::dvec3& target, const glm::dvec3& upVector)
+Camera::Camera(const ldvec3& position, const ldvec3& target, const ldvec3& upVector)
 {
     this->cameraPos = position;
     this->cameraTarget = target;
     this->upVector = upVector;
-    this->cameraFront = glm::dvec3(0.0, 0.0, -1.0);
+    this->cameraFront = ldvec3(0.0, 0.0, -1.0);
     this->cameraDirection = glm::normalize(this->cameraPos - this->cameraTarget);
     this->cameraRight = glm::normalize(glm::cross(this->upVector, this->cameraDirection));
     this->cameraUp = glm::normalize(glm::cross(this->cameraDirection, this->cameraRight));
     this->viewMatrix = glm::lookAt(this->cameraPos, this->cameraFront, this->upVector);
 }
 
-glm::dvec3 Camera::getDirection() const
+ldvec3 Camera::getDirection() const
 {
     return cameraDirection;
 }
 
-glm::dvec3 Camera::getPosition() const
+ldvec3 Camera::getPosition() const
 {
     return cameraPos;
 }
 
-glm::dvec3 Camera::getTarget() const
+ldvec3 Camera::getTarget() const
 {
     return cameraTarget;
 }
 
-glm::dvec3 Camera::getUpVector() const
+ldvec3 Camera::getUpVector() const
 {
     return upVector;
 }
 
-glm::dmat4 Camera::getViewMatrix() const
+ldmat4 Camera::getViewMatrix() const
 {
     return viewMatrix;
 }
 
-void Camera::processInput(GLFWwindow *window, const double deltaTime)
+void Camera::processInput(GLFWwindow *window, const long double deltaTime)
 {
-    const double cameraSpeed = 2.0 * deltaTime;
+    const long double cameraSpeed = 2.0 * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
         cameraPos += cameraSpeed * cameraFront;
@@ -68,31 +69,31 @@ void Camera::processInput(GLFWwindow *window, const double deltaTime)
     this->Update();
 }
 
-void Camera::setDirection(const glm::dvec3& direction)
+void Camera::setDirection(const ldvec3& direction)
 {
     this->cameraDirection = glm::normalize(direction);
     this->Update();
 }
 
-void Camera::setFront(const glm::dvec3& front)
+void Camera::setFront(const ldvec3& front)
 {
     this->cameraFront = glm::normalize(front);
     this->Update();
 }
 
-void Camera::setPosition(const glm::dvec3& position)
+void Camera::setPosition(const ldvec3& position)
 {
     this->cameraPos = position;
     this->Update();
 }
 
-void Camera::setTarget(const glm::dvec3& target)
+void Camera::setTarget(const ldvec3& target)
 {
     this->cameraTarget = target;
     this->Update();
 }
 
-void Camera::setUpVector(const glm::dvec3& up)
+void Camera::setUpVector(const ldvec3& up)
 {
     this->upVector = up;
     this->Update();

@@ -9,68 +9,76 @@
 #include "Camera.h"
 
 
-inline constexpr double two_pi = std::numbers::pi * 2.f;
-inline constexpr int res = 100;
-inline constexpr float deltaTheta = two_pi / static_cast<double>(res);
-inline constexpr float deltaPhi = (two_pi / static_cast<double>(res)) * 0.5;
+inline constexpr long double PI = 3.14159265358979323846264338327L;
+inline constexpr long double TAU = PI * 2.0L;
+inline constexpr long double PI_2 = PI / 2.0L;
+inline constexpr long double DEGREES = 180.0L / PI;
+inline constexpr long double PHI = 1.61803398874989484820458683436L;
+inline constexpr unsigned long long res = 10000;
 
-enum ObjectType
+namespace SSG::PhysicsEngine
 {
-    SPHERE,
-    CUBE,
-    CYLINDER,
-    RECTANGLE,
-    PLANE,
-    MESH,
-};
+    enum ObjectType
+    {
+        SPHERE,
+        CUBE,
+        CYLINDER,
+        RECTANGLE,
+        PLANE,
+        MESH,
+    };
 
-class Object
-{
-public:
-    Object(const std::vector<double>& position, const std::vector<double>& velocity, double mass, ObjectType objectType, const double* objectParameters);
-    Object(const std::vector<double>& position, double mass, ObjectType objectType, const double* objectParameters);
-    Object(double mass, ObjectType objectType, const double* objectParameters);
-    Object() = default;
-    virtual ~Object() = default;
-    [[nodiscard]] virtual std::vector<GLfloat> Construct() const;
-    [[nodiscard]] virtual std::vector<GLfloat> ConstructSphere() const;
-    static std::vector<double> DeltaPosition(const std::vector<double>& velocity, const std::vector<double>& acceleration,
-                                             double dt);
-    static std::vector<double> DeltaVelocity(const std::vector<double>& acceleration);
-    virtual void Draw();
-    [[nodiscard]] virtual std::vector<double> getAcceleration() const;
-    [[nodiscard]] virtual double getMass() const;
-    [[nodiscard]] virtual std::vector<double> getPosition() const;
-    [[nodiscard]] virtual std::vector<double> getVelocity() const;
-    virtual void HandleBounds(const std::pair<double, double>& x_bounds,
-                              const std::pair<double, double>& y_bounds,
-                              const std::pair<double, double>& z_bounds);
-    virtual void HandleCollision(Object& other);
-    virtual void RK4Step(double dt);
-    virtual void setAcceleration(const std::vector<double>& _acceleration);
-    virtual void setMass(float _mass);
-    virtual void setPosition(const std::vector<double>& _position);
-    virtual void setVelocity(const std::vector<double>& _velocity);
-    [[nodiscard]] glm::dvec3 Spherical2Cartesian(double theta, double phi) const;
-    virtual void update(const std::vector<double>& _acceleration, double dt);
-    virtual void update(double dt);
+    class Object
+    {
+    public:
+        Object(const ldvec3& position, const ldvec3& velocity, long double mass, ObjectType objectType, const long double* objectParameters);
+        Object(const ldvec3& position, long double mass, ObjectType objectType, const long double* objectParameters);
+        Object(long double mass, ObjectType objectType, const long double* objectParameters);
+        Object() = default;
+        virtual ~Object() = default;
+        [[nodiscard]] virtual std::vector<ldvec3> Construct() const;
+        [[nodiscard]] static std::vector<ldvec3> ConstructSphere(const ldvec3& _position = {0.0L, 0.0L, 0.0L});
+        [[nodiscard]] static std::vector<ldvec3> ConstructFibonacciSphere();
+        [[nodiscard]] static std::vector<ldvec3> ConstructModifiedFibonacciSphere();
+        static ldvec3 DeltaPosition(const ldvec3& velocity, const ldvec3& acceleration,
+                                              long double dt);
+        static ldvec3 DeltaVelocity(const ldvec3& acceleration);
+        virtual void Draw();
+        [[nodiscard]] virtual ldvec3 getAcceleration() const;
+        [[nodiscard]] virtual long double getMass() const;
+        [[nodiscard]] virtual ldvec3 getPosition() const;
+        [[nodiscard]] virtual ldvec3 getVelocity() const;
+        virtual void HandleBounds(const std::pair<long double, long double>& x_bounds,
+                                  const std::pair<long double, long double>& y_bounds,
+                                  const std::pair<long double, long double>& z_bounds);
+        virtual void HandleCollision(Object& other);
+        static ldvec3 InverseStereoProjection(const ldvec2& point);
+        virtual void RK4Step(long double dt);
+        virtual void setAcceleration(const ldvec3& _acceleration);
+        virtual void setMass(long double _mass);
+        virtual void setPosition(const ldvec3& _position);
+        virtual void setVelocity(const ldvec3& _velocity);
+        static ldvec3 Spherical2Cartesian(long double theta, long double phi);
+        static ldvec2 StereoProjection(const ldvec3& point);
+        virtual void update(const ldvec3& _acceleration, long double dt);
+        virtual void update(long double dt);
 
-protected:
-    ObjectType objectType{};
+    protected:
+        ObjectType objectType{};
 
-    std::vector<double> position = std::vector<double>(3, 0.0);
-    std::vector<double> velocity = std::vector<double>(3, 0.0);
-    std::vector<double> acceleration = std::vector<double>(3, 0.0);
+        ldvec3 position = ldvec3(0.0);
+        ldvec3 velocity = ldvec3(0.0);
+        ldvec3 acceleration = ldvec3(0.0);
 
-    double mass = 1.0;
-    const double* objectParameters{};
+        long double mass = 1.0;
+        const long double* objectParameters{};
 
-    double radius = 0;
-    double sideLength = 0;
-    double height = 0;
-    double width = 0;
-    double length = 0;
-};
-
+        long double radius = 0;
+        long double sideLength = 0;
+        long double height = 0;
+        long double width = 0;
+        long double length = 0;
+    };
+}
 
 #endif //PHYSICS_SIMULATION_OBJECTS_H

@@ -3,39 +3,41 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "LongDoubleGLMExtension.h"
 
-
-class Camera
+namespace SSG::PhysicsEngine
 {
-public:
-    Camera(const glm::dvec3& position, const glm::dvec3& target, const glm::dvec3& upVector);
-    Camera() = default;
-    ~Camera() = default;
+    class Camera
+    {
+    public:
+        Camera(const ldvec3& position, const ldvec3& target, const ldvec3& upVector);
+        Camera() = default;
+        ~Camera() = default;
 
-    [[nodiscard]] glm::dvec3 getDirection() const;
-    [[nodiscard]] glm::dvec3 getPosition() const;
-    [[nodiscard]] glm::dvec3 getTarget() const;
-    [[nodiscard]] glm::dvec3 getUpVector() const;
-    [[nodiscard]] glm::dmat4 getViewMatrix() const;
-    void processInput(GLFWwindow *window, double deltaTime);
-    void setDirection(const glm::dvec3& direction);
-    void setFront(const glm::dvec3& front);
-    void setPosition(const glm::dvec3& position);
-    void setTarget(const glm::dvec3& target);
-    void setUpVector(const glm::dvec3& up);
-    void Update();
+        [[nodiscard]] ldvec3 getDirection() const;
+        [[nodiscard]] ldvec3 getPosition() const;
+        [[nodiscard]] ldvec3 getTarget() const;
+        [[nodiscard]] ldvec3 getUpVector() const;
+        [[nodiscard]] ldmat4 getViewMatrix() const;
+        void processInput(GLFWwindow *window, long double deltaTime);
+        void setDirection(const ldvec3& direction);
+        void setFront(const ldvec3& front);
+        void setPosition(const ldvec3& position);
+        void setTarget(const ldvec3& target);
+        void setUpVector(const ldvec3& up);
+        void Update();
 
-protected:
-    glm::dvec3 cameraPos = glm::dvec3(0.0, 0.0, 5.0);
-    glm::dvec3 cameraTarget = glm::dvec3(0.0, 0.0, 0.0);
-    glm::dvec3 upVector = glm::dvec3(0.0, 1.0, 0.0);
-    glm::dvec3 cameraFront = glm::dvec3(0.0, 0.0, -1.0);
+    protected:
+        ldvec3 cameraPos = ldvec3(0.0L, 0.0L, 5.0L);
+        ldvec3 cameraTarget = ldvec3(0.0L, 0.0L, 0.0L);
+        ldvec3 upVector = ldvec3(0.0L, 1.0L, 0.0L);
+        ldvec3 cameraFront = ldvec3(0.0L, 0.0L, -1.0L);
 
-    glm::dvec3 cameraDirection = glm::normalize(this->cameraPos - this->cameraTarget);
-    glm::dvec3 cameraRight = glm::normalize(glm::cross(this->upVector, this->cameraDirection));
-    glm::dvec3 cameraUp = glm::normalize(glm::cross(this->cameraDirection, this->cameraRight));
-    glm::dmat4 viewMatrix = glm::lookAt(this->cameraPos, this->cameraTarget, this->upVector);
-};
-
+        ldvec3 cameraDirection = glm::normalize(this->cameraPos - this->cameraTarget);
+        ldvec3 cameraRight = glm::normalize(glm::cross(this->upVector, this->cameraDirection));
+        ldvec3 cameraUp = glm::normalize(glm::cross(this->cameraDirection, this->cameraRight));
+        ldmat4 viewMatrix = glm::lookAt(this->cameraPos, this->cameraTarget, this->upVector);
+    };
+}
 
 #endif //PHYSICS_SIMULATION_CAMERA_H

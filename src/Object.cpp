@@ -6,8 +6,9 @@
 
 #include "Camera.h"
 
+using namespace SSG::PhysicsEngine;
 
-Object::Object(const std::vector<double>& position, const std::vector<double>& velocity, const double mass, const ObjectType objectType, const double* objectParameters)
+Object::Object(const ldvec3& position, const ldvec3& velocity, const long double mass, const ObjectType objectType, const long double* objectParameters)
 {
     this->objectType = objectType;
     this->objectParameters = objectParameters;
@@ -21,10 +22,10 @@ Object::Object(const std::vector<double>& position, const std::vector<double>& v
     this->velocity = velocity;
     this->mass = mass;
 
-    this->acceleration = std::vector<double>(3, 0.0);
+    this->acceleration = ldvec3(0.0L);
 }
 
-Object::Object(const std::vector<double>& position, const double mass, const ObjectType objectType, const double* objectParameters)
+Object::Object(const ldvec3& position, const long double mass, const ObjectType objectType, const long double* objectParameters)
 {
     this->objectType = objectType;
     this->objectParameters = objectParameters;
@@ -37,11 +38,11 @@ Object::Object(const std::vector<double>& position, const double mass, const Obj
     this->position = position;
     this->mass = mass;
 
-    this->velocity = std::vector<double>(3, 0.0);
-    this->acceleration = std::vector<double>(3, 0.0);
+    this->velocity = ldvec3(0.0L);
+    this->acceleration = ldvec3(0.0L);
 }
 
-Object::Object(const double mass, const ObjectType objectType, const double* objectParameters)
+Object::Object(const long double mass, const ObjectType objectType, const long double* objectParameters)
 {
     this->objectType = objectType;
     this->objectParameters = objectParameters;
@@ -54,7 +55,7 @@ Object::Object(const double mass, const ObjectType objectType, const double* obj
     this->mass = mass;
 }
 
-std::vector<GLfloat> Object::Construct() const
+std::vector<ldvec3> Object::Construct() const
 {
     if (this->objectType == ObjectType::SPHERE)
     {
@@ -64,86 +65,95 @@ std::vector<GLfloat> Object::Construct() const
     throw std::runtime_error("Object type not implemented");
 }
 
-std::vector<GLfloat> Object::ConstructSphere() const
+std::vector<ldvec3> Object::ConstructSphere(const ldvec3& _position)
 {
-    std::vector<GLfloat> vertices(36 * (res + 1) * (res + 0), 0.0);
+    constexpr long double deltaTheta = TAU / res;
+    constexpr long double deltaPhi = TAU / res * 0.5L;
+    std::vector<ldvec3> vertices(6 * (res + 1) * (res + 0));
 
-    for (int i = 0; i <= res; ++i)
+    for (unsigned long long i = 0; i <= res; ++i)
     {
-        for (int j = 0; j < res; ++j)
+        for (unsigned long long j = 0; j < res; ++j)
         {
-            const double theta = deltaTheta * static_cast<double>(i);
-            const double phi = deltaPhi * static_cast<double>(j);
-            const double theta_prime = deltaTheta * static_cast<double>(i + 1);
-            const double phi_prime = deltaPhi * static_cast<double>(j + 1);
+            const long double theta = deltaTheta * i;
+            const long double phi = deltaPhi * j;
+            const long double theta_prime = deltaTheta * (i + 1);
+            const long double phi_prime = deltaPhi * (j + 1);
 
-            const glm::vec3 v1 = Spherical2Cartesian(theta, phi);
-            const glm::vec3 v2 = Spherical2Cartesian(theta, phi_prime);
-            const glm::vec3 v3 = Spherical2Cartesian(theta_prime, phi);
-            const glm::vec3 v4 = Spherical2Cartesian(theta_prime, phi_prime);
+            const ldvec3 v1 = Spherical2Cartesian(theta, phi);
+            const ldvec3 v2 = Spherical2Cartesian(theta, phi_prime);
+            const ldvec3 v3 = Spherical2Cartesian(theta_prime, phi);
+            const ldvec3 v4 = Spherical2Cartesian(theta_prime, phi_prime);
 
-            const int index = 36 * (i * (res + 0) + j);
+            const unsigned long long index = 6 * (i * (res + 0) + j);
 
-            vertices[index + 0] = v1.x + static_cast<float>(position[0]);
-            vertices[index + 1] = v1.y + static_cast<float>(position[1]);
-            vertices[index + 2] = v1.z + static_cast<float>(position[2]);
-            vertices[index + 3] = 1.0;
-            vertices[index + 4] = 0.0;
-            vertices[index + 5] = 0.0;
-            vertices[index + 6] = v2.x + static_cast<float>(position[0]);
-            vertices[index + 7] = v2.y + static_cast<float>(position[1]);
-            vertices[index + 8] = v2.z + static_cast<float>(position[2]);
-            vertices[index + 9] = 0.0;
-            vertices[index + 10] = 1.0;
-            vertices[index + 11] = 0.0;
-            vertices[index + 12] = v3.x + static_cast<float>(position[0]);
-            vertices[index + 13] = v3.y + static_cast<float>(position[1]);
-            vertices[index + 14] = v3.z + static_cast<float>(position[2]);
-            vertices[index + 15] = 0.0;
-            vertices[index + 16] = 0.0;
-            vertices[index + 17] = 1.0;
-            vertices[index + 18] = v2.x + static_cast<float>(position[0]);
-            vertices[index + 19] = v2.y + static_cast<float>(position[1]);
-            vertices[index + 20] = v2.z + static_cast<float>(position[2]);
-            vertices[index + 21] = 1.0;
-            vertices[index + 22] = 0.0;
-            vertices[index + 23] = 0.0;
-            vertices[index + 24] = v4.x + static_cast<float>(position[0]);
-            vertices[index + 25] = v4.y + static_cast<float>(position[1]);
-            vertices[index + 26] = v4.z + static_cast<float>(position[2]);
-            vertices[index + 27] = 0.0;
-            vertices[index + 28] = 1.0;
-            vertices[index + 29] = 0.0;
-            vertices[index + 30] = v3.x + static_cast<float>(position[0]);
-            vertices[index + 31] = v3.y + static_cast<float>(position[1]);
-            vertices[index + 32] = v3.z + static_cast<float>(position[2]);
-            vertices[index + 33] = 0.0;
-            vertices[index + 34] = 0.0;
-            vertices[index + 35] = 1.0;
+            vertices[index + 0] = v1 + _position;
+            vertices[index + 1] = v2 + _position;
+            vertices[index + 2] = v3 + _position;
+            vertices[index + 3] = v2 + _position;
+            vertices[index + 4] = v4 + _position;
+            vertices[index + 5] = v3 + _position;
         }
     }
 
     return vertices;
 }
 
-std::vector<double> Object::DeltaPosition(const std::vector<double>& velocity, const std::vector<double>& acceleration, const double dt)
+std::vector<ldvec3> Object::ConstructFibonacciSphere()
 {
-    std::vector<double> deltaPosition(velocity.size(), 0.0);
-    for (int i = 0; i < velocity.size(); i++)
+    std::vector<ldvec3> points;
+    points.reserve(res);
+
+    constexpr long double deltaAngle = TAU / PHI;
+    for (unsigned long long i = 0; i < res; i++)
     {
-        deltaPosition[i] = velocity[i] + acceleration[i] * dt;
+        const long double t = i / res;
+        const long double theta = std::acos(1.0L - 2.0L * t);
+        const long double phi = deltaAngle * i;
+
+        points.push_back(Spherical2Cartesian(theta, phi));
     }
+
+    return points;
+}
+
+// Credit to Martin Roberts for the original optimized code and Fil for the further optimization of the pole gap.
+// Personally modified to work in radians instead of degrees.
+// https://extremelearning.com.au/how-to-evenly-distribute-points-on-a-sphere-more-effectively-than-the-canonical-fibonacci-lattice/
+// https://observablehq.com/@fil/spherical-phyllotaxis
+std::vector<ldvec3> Object::ConstructModifiedFibonacciSphere()
+{
+    std::vector<ldvec3> points;
+    points.reserve(res);
+
+    constexpr long double thetaStep = TAU / PHI;
+    constexpr long double poleGap = 0.7012L;
+    constexpr long double phiStep = 2.0L / (res - 1.0L + 2.0L * poleGap);
+    constexpr long double phiStart = -1.0L + phiStep * poleGap;
+    points.push_back(Spherical2Cartesian(0.0L, -PI_2));
+    if (res <= 1) return {};
+    for (unsigned long long i = 0; i < res - 1; i++)
+    {
+        const long double theta = thetaStep * i - std::round(i / PHI);
+        const long double phi = PI * std::asin(phiStart + i * phiStep);
+
+        points.push_back(Spherical2Cartesian(theta, phi));
+    }
+    points.push_back(Spherical2Cartesian(0.0L, PI_2));
+
+    return points;
+}
+
+ldvec3 Object::DeltaPosition(const ldvec3& velocity, const ldvec3& acceleration, const long double dt)
+{
+    const ldvec3 deltaPosition = velocity + acceleration * dt;
 
     return deltaPosition;
 }
 
-std::vector<double> Object::DeltaVelocity(const std::vector<double>& acceleration)
+ldvec3 Object::DeltaVelocity(const ldvec3& acceleration)
 {
-    std::vector<double> deltaVelocity(acceleration.size(), 0.0);
-    for (int i = 0; i < acceleration.size(); i++)
-    {
-        deltaVelocity[i] = acceleration[i];
-    }
+    const ldvec3 deltaVelocity = acceleration;
 
     return deltaVelocity;
 }
@@ -153,27 +163,27 @@ void Object::Draw()
 
 }
 
-std::vector<double> Object::getAcceleration() const
+ldvec3 Object::getAcceleration() const
 {
     return acceleration;
 }
 
-double Object::getMass() const
+long double Object::getMass() const
 {
     return mass;
 }
 
-std::vector<double> Object::getPosition() const
+ldvec3 Object::getPosition() const
 {
     return position;
 }
 
-std::vector<double> Object::getVelocity() const
+ldvec3 Object::getVelocity() const
 {
     return velocity;
 }
 
-void Object::HandleBounds(const std::pair<double, double>& x_bounds, const std::pair<double, double>& y_bounds, const std::pair<double, double>& z_bounds)
+void Object::HandleBounds(const std::pair<long double, long double>& x_bounds, const std::pair<long double, long double>& y_bounds, const std::pair<long double, long double>& z_bounds)
 {
     if (position[0] < x_bounds.first)
     {
@@ -195,18 +205,15 @@ void Object::HandleBounds(const std::pair<double, double>& x_bounds, const std::
         position[1] = y_bounds.second;
         velocity[1] *= -1;
     }
-    if (this->position.size() > 2)
+    if (position[2] < z_bounds.first)
     {
-        if (position[2] < z_bounds.first)
-        {
-            position[2] = z_bounds.first;
-            velocity[2] *= -1;
-        }
-        else if (position[2] > z_bounds.second)
-        {
-            position[2] = z_bounds.second;
-            velocity[2] *= -1;
-        }
+        position[2] = z_bounds.first;
+        velocity[2] *= -1;
+    }
+    else if (position[2] > z_bounds.second)
+    {
+        position[2] = z_bounds.second;
+        velocity[2] *= -1;
     }
 }
 
@@ -215,54 +222,66 @@ void Object::HandleCollision(Object& other)
     std::cout << "Collision" << std::endl;
 }
 
-void Object::RK4Step(const double dt)
+ldvec3 Object::InverseStereoProjection(const ldvec2& point)
 {
-    const std::vector<double> k1_p = DeltaPosition(velocity, acceleration, dt);
-    const std::vector<double> k2_p = DeltaPosition(k1_p, acceleration, dt / 2.0);
-    const std::vector<double> k3_p = DeltaPosition(k2_p, acceleration, dt / 2.0);
-    const std::vector<double> k4_p = DeltaPosition(k3_p, acceleration, dt);
+    const long double denom = 1.0L + point.x * point.x + point.y * point.y;
 
-    for (int i = 0; i < position.size(); i++)
-    {
-        position[i] += (k1_p[i] + 2 * k2_p[i] + 2 * k3_p[i] + k4_p[i]) / 6.0;
-        velocity[i] += acceleration[i] * dt;
-    }
+    return {2.0L * point.x / denom,
+               2.0L * point.y / denom,
+               1.0L - 2.0L / denom};
 }
 
-void Object::setAcceleration(const std::vector<double>& _acceleration)
+void Object::RK4Step(const long double dt)
+{
+    const ldvec3 k1_p = DeltaPosition(velocity, acceleration, dt);
+    const ldvec3 k2_p = DeltaPosition(k1_p, acceleration, dt / 2.0);
+    const ldvec3 k3_p = DeltaPosition(k2_p, acceleration, dt / 2.0);
+    const ldvec3 k4_p = DeltaPosition(k3_p, acceleration, dt);
+
+    this->position += (k1_p + 2.0L * k2_p + 2.0L * k3_p + k4_p) / 6.0L;
+    this->velocity += this->acceleration * dt;
+}
+
+void Object::setAcceleration(const ldvec3& _acceleration)
 {
     this->acceleration = _acceleration;
 }
 
-void Object::setMass(const float _mass)
+void Object::setMass(const long double _mass)
 {
     this->mass = _mass;
 }
 
-void Object::setPosition(const std::vector<double>& _position)
+void Object::setPosition(const ldvec3& _position)
 {
     this->position = _position;
 }
 
-void Object::setVelocity(const std::vector<double>& _velocity)
+void Object::setVelocity(const ldvec3& _velocity)
 {
     this->velocity = _velocity;
 }
 
-glm::dvec3 Object::Spherical2Cartesian(const double theta, const double phi) const
+ldvec3 Object::Spherical2Cartesian(const long double theta, const long double phi)
 {
-    return {std::cos(theta) * std::sin(phi) * this->radius,
-               std::sin(theta) * std::sin(phi) * this->radius,
-               std::cos(phi) * this->radius};
+    return {std::cos(theta) * std::sin(phi),
+               std::sin(theta) * std::sin(phi),
+               std::cos(phi)};
 }
 
-void Object::update(const std::vector<double>& _acceleration, const double dt)
+ldvec2 Object::StereoProjection(const ldvec3& point)
+{
+    return {point.x / (1.0L - point.z),
+               point.y / (1.0L - point.z)};
+}
+
+void Object::update(const ldvec3& _acceleration, const long double dt)
 {
     this->acceleration = _acceleration;
     this->RK4Step(dt);
 }
 
-void Object::update(const double dt)
+void Object::update(const long double dt)
 {
     this->RK4Step(dt);
 }
